@@ -2,6 +2,7 @@ use std::cell::UnsafeCell;
 use std::sync::{Arc};
 use std::time::Duration;
 use tokio::time::interval;
+use crate::DriveConfig;
 use crate::vfs::combine::{CombinableVfsDir, CombinableVfsFile, combine_vfs_dirs};
 use crate::vfs::hide_url::{hide_url_for_dir, UrlHiddenDir};
 use crate::vfs::path_compress::IndexedVfs;

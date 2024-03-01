@@ -2,6 +2,8 @@ mod vfs;
 mod driver;
 mod memory_db;
 
+pub enum DriveConfig{}
+
 fn add(left: usize, right: usize) -> usize {
     left + right
 }

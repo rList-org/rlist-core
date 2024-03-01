@@ -1,10 +1,6 @@
 use crate::vfs::combine::{CombinableVfsDir, CombinableVfsFile};
 use crate::vfs::{VfsDir, VfsEntry, VfsFile};
 
-/// # OneDrive Driver
-/// To use onedrive as a VFS, you need to provide a refresh token, a client id and a client secret. (*refer to `OnedriveConfig` in `config_struct.rs`*)
-pub(crate) use onedrive::OneDriveDriver;
-
 /// # Cloud Driver
 /// The cloud driver is a driver that can be used to access a cloud storage service, then use the cloud storage service as a virtual file system(VFS).
 #[async_trait::async_trait]
