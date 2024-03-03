@@ -3,5 +3,5 @@
 version = 3
 
 [[package]]
-name = "rlist-core"
+name = "rlist-driver-macro"
 version = "0.1.0"

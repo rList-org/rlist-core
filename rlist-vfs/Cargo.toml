@@ -1,5 +1,5 @@
 [package]
-name = "rlist-core"
+name = "rlist-vfs"
 version = "0.1.0"
 edition = "2021"
 
