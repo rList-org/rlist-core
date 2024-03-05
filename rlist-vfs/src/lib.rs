@@ -1,6 +1,8 @@
 mod static_combinable;
 mod combinable;
 mod combinable_dir;
+mod rcu;
+mod driver;
 
 /// Basic VFS (Virtual File System) traits
 pub trait VfsBasicMeta

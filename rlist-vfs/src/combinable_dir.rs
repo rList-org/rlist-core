@@ -35,6 +35,11 @@ impl<File: StaticDownloadLinkFile> CombinableDir<File> {
     pub fn destruct(self) -> (String, Vec<File>, Vec<CombinableDir<File>>) {
         (self.name, self.files, self.subdirectories)
     }
+
+    /// Move the root to the given path
+    pub fn mount(self, path: Vec<String>) -> CombinableDir<File> {
+        unimplemented!()
+    }
 }
 
 impl<File: StaticDownloadLinkFile> VfsBasicMeta for CombinableDir<File> {

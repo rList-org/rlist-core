@@ -42,3 +42,45 @@ where T: StaticDownloadLinkFile
         return links[index].clone()
     }
 }
+
+#[derive(Clone)]
+/// minimal implementation of `StaticDownloadLinkFile`
+pub struct StaticCombinableFile {
+    pub name: String,
+    pub size: u64,
+    pub last_modified: SystemTime,
+    pub links: Vec<String>,
+}
+
+impl VfsBasicMeta for StaticCombinableFile {
+    fn name(&self) -> &str {
+        self.name.as_str()
+    }
+
+    fn size(&self) -> u64 {
+        self.size
+    }
+
+    fn last_modified(&self) -> SystemTime {
+        self.last_modified
+    }
+}
+
+impl StaticDownloadLinkFile for StaticCombinableFile {
+    fn new(name: String, size: u64, last_modified: SystemTime, links: Vec<String>) -> Self {
+        Self {
+            name,
+            size,
+            last_modified,
+            links,
+        }
+    }
+
+    fn links(&self) -> &Vec<String> {
+        &self.links
+    }
+
+    fn destruct(self) -> (String, u64, SystemTime, Vec<String>) {
+        (self.name, self.size, self.last_modified, self.links)
+    }
+}
