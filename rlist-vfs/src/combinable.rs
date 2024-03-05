@@ -1,3 +1,5 @@
-pub trait Combinable<T> {
-    fn combine(from: Vec<T>) -> Self;
+pub trait Combinable
+    where Self: Sized
+{
+    fn combine(from: Vec<Self>) -> Self;
 }

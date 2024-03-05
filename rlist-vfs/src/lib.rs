@@ -3,7 +3,9 @@ mod combinable;
 mod combinable_dir;
 
 /// Basic VFS (Virtual File System) traits
-pub trait VfsBasicMeta: Send + Sync + Sized + 'static {
+pub trait VfsBasicMeta
+    where Self: Send + Sync + Clone + Sized + 'static
+{
     fn name(&self) -> &str;
     fn size(&self) -> u64;  // in bytes
     fn last_modified(&self) -> std::time::SystemTime;

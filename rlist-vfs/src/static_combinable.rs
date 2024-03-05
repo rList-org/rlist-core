@@ -18,7 +18,7 @@ pub trait StaticDownloadLinkFile: VfsBasicMeta {
     fn destruct(self) -> (String, u64, SystemTime, Vec<String>);
 }
 
-impl<T: StaticDownloadLinkFile> Combinable<T> for T {
+impl<T: StaticDownloadLinkFile> Combinable for T {
     /// Combine **same** files which have different download links to one file.
     fn combine(from: Vec<Self>) -> Self {
         let destructed: Vec<(String, u64, SystemTime, Vec<String>)> = from.into_iter()
