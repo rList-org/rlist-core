@@ -1,8 +1,7 @@
-use std::collections::HashMap;
 use async_trait::async_trait;
 use crate::combinable_dir::CombinableDir;
 use crate::rcu::ReadCopyUpdate;
-use crate::static_combinable::{StaticCombinableFile, StaticDownloadLinkFile};
+use crate::static_combinable::{StaticCombinableFile};
 
 #[async_trait]
 pub trait CloudDriver<Config, State> {
@@ -30,3 +29,5 @@ pub trait CloudDriver<Config, State> {
 
     async fn reload_vfs(state: &State) -> Result<CombinableDir<StaticCombinableFile>, String>;
 }
+
+

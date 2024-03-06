@@ -18,7 +18,14 @@ impl<File: StaticDownloadLinkFile> CombinableDir<File> {
         let size_file = files.iter().map(|x| x.size()).sum::<u64>();
         let size_subdirectories = subdirectories.iter().map(|x| x.size()).sum::<u64>();
         let size = size_file + size_subdirectories;
-        let last_modified = files.iter().map(|x| x.last_modified()).max().unwrap();
+        let last_modified = if files.is_empty() && subdirectories.is_empty() {
+            SystemTime::now()
+        } else {
+            let files_last_modified = files.iter().map(|x| x.last_modified());
+            let subdirectories_last_modified = subdirectories.iter().map(|x| x.last_modified());
+            files_last_modified.chain(subdirectories_last_modified)
+                .max().unwrap()
+        };
         Self {
             name,
             files,
@@ -38,7 +45,17 @@ impl<File: StaticDownloadLinkFile> CombinableDir<File> {
 
     /// Move the root to the given path
     pub fn mount(self, path: Vec<String>) -> CombinableDir<File> {
-        unimplemented!()
+        let size = self.size;
+        let last_modified = self.last_modified;
+        let mut root = CombinableDir::new(path[0].clone(), vec![], vec![]);
+        for name in path.into_iter().skip(1) {
+            let mut new_root = CombinableDir::new(name, vec![], vec![]);
+            new_root.subdirectories.push(root);
+            root = new_root;
+        }
+        root.size = size;
+        root.last_modified = last_modified;
+        return root;
     }
 }
 
