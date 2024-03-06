@@ -57,6 +57,21 @@ impl<File: StaticDownloadLinkFile> CombinableDir<File> {
         root.last_modified = last_modified;
         return root;
     }
+
+    pub fn compress_path(self) -> HashMap<String, String> {
+        // TODO: Test this method
+        let mut map: HashMap<String, String> = HashMap::new();
+        let mut stack: Vec<(String, CombinableDir<File>)> = vec![(String::new(), self)];
+        while !stack.is_empty() {
+            let (path, dir) = stack.pop().unwrap();
+            map.insert(path.clone(), dir.name.clone());
+            for subdirectory in dir.subdirectories {
+                let new_path = format!("{}/{}", path, subdirectory.name);
+                stack.push((new_path, subdirectory));
+            }
+        }
+        return map;
+    }
 }
 
 impl<File: StaticDownloadLinkFile> VfsBasicMeta for CombinableDir<File> {

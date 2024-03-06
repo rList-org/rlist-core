@@ -17,3 +17,5 @@ impl<T> ReadCopyUpdate<T> {
         unsafe { *self.0.get() = new; }
     }
 }
+
+unsafe impl<T> Sync for ReadCopyUpdate<T> {}

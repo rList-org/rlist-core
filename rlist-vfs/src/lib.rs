@@ -1,9 +1,12 @@
-mod static_combinable;
+pub mod static_combinable;
 mod combinable;
 mod combinable_dir;
-pub mod rcu;
-mod driver;
+mod rcu;
+pub mod driver;
 mod without_link;
+mod wheel;
+
+pub use wheel::Wheel as RListCore;
 
 /// Basic VFS (Virtual File System) traits
 pub trait VfsBasicMeta
