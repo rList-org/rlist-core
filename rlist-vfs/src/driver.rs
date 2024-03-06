@@ -1,6 +1,6 @@
 use async_trait::async_trait;
 use serde::Deserialize;
-pub use crate::combinable_dir::CombinableDir;
+use crate::combinable_dir::CombinableDir;
 use crate::static_combinable::{StaticCombinableFile};
 
 #[async_trait]
@@ -22,7 +22,7 @@ pub trait GetVfs: Send + Sync {
     /// ## Example:
     /// ```ignore
     /// async fn get_vfs(&self) ->
-    ///     Result<CombinableDir<rlist_vfs::static_combinable::StaticCombinableFile>, String> {
+    ///     Result<CombinableDir<rlist-vfs::static_combinable::StaticCombinableFile>, String> {
     ///         self.reload_vfs().await
     /// }
     /// ```

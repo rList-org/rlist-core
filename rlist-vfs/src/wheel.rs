@@ -1,7 +1,8 @@
 use std::collections::HashMap;
-use std::sync::Arc;
 use crate::combinable::Combinable;
-use crate::driver::{CombinableDir, GetVfs};
+use std::sync::Arc;
+use crate::combinable_dir::CombinableDir;
+use crate::driver::GetVfs;
 use crate::rcu::ReadCopyUpdate;
 use crate::without_link::DirWithoutLink;
 use futures::future::join_all;
