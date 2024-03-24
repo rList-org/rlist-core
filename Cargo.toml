@@ -9,4 +9,4 @@ repository = "https://github.com/rList-org/rlist-core.git"
 license = "MIT"
 
 [dependencies]
-rlist_vfs = { path = "rlist-vfs", version = "0.1.0"}
+rlist_vfs = "0.1.0"
