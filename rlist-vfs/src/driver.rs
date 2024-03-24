@@ -1,7 +1,7 @@
 use async_trait::async_trait;
 use serde::Deserialize;
 use crate::combinable_dir::CombinableDir;
-use crate::static_combinable::{StaticCombinableFile};
+use crate::static_combinable::StaticCombinableFile;
 
 #[async_trait]
 pub trait CloudDriver<Config, State>: GetVfs

@@ -2,6 +2,11 @@
 name = "rlist-core"
 version = "0.1.0"
 edition = "2021"
+authors = [
+    "Nikaidou Haruki <meteo.haru@gmail.com>"
+]
+repository = "https://github.com/rList-org/rlist-core.git"
+license = "MIT"
 
 [dependencies]
 rlist_vfs = { path = "rlist-vfs" }
