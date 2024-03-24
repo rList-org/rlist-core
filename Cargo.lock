@@ -455,6 +455,8 @@ dependencies = [
 [[package]]
 name = "rlist_vfs"
 version = "0.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "12aa8906bf087c7ac40bcc61594e630eaa98955880f43fb06ea972c83a4b54c7"
 dependencies = [
  "async-trait",
  "chrono",
