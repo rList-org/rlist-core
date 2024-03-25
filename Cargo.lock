@@ -450,15 +450,13 @@ name = "rlist-driver-macro"
 version = "0.1.1"
 dependencies = [
  "quote",
- "rlist_vfs 0.1.1",
+ "rlist_vfs 0.1.2 (registry+https://github.com/rust-lang/crates.io-index)",
  "syn",
 ]
 
 [[package]]
 name = "rlist_vfs"
-version = "0.1.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f616df630479524b35dbeab71f963a2f5d16b3238cecd6980daf9b2df93d0453"
+version = "0.1.2"
 dependencies = [
  "async-trait",
  "chrono",
@@ -472,6 +470,8 @@ dependencies = [
 [[package]]
 name = "rlist_vfs"
 version = "0.1.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "7f39f432cea73e5fca55fd219e14a04d9dcf50ad9919ade4787fd31a2465b320"
 dependencies = [
  "async-trait",
  "chrono",
