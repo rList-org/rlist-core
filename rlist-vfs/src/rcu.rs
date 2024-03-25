@@ -1,20 +1,36 @@
-use std::cell::UnsafeCell;
 use std::sync::Arc;
+use std::sync::atomic::{AtomicPtr, Ordering};
 
-pub struct ReadCopyUpdate<T> (UnsafeCell<Arc<T>>);
+pub struct ReadCopyUpdate<T> (AtomicPtr<Arc<T>>);
 
 impl<T> ReadCopyUpdate<T> {
     pub fn new(value: T) -> Self {
-        ReadCopyUpdate(UnsafeCell::new(Arc::new(value)))
+        ReadCopyUpdate(
+            AtomicPtr::new(
+                Box::into_raw(
+                    Box::new(
+                        Arc::new(value)
+                    )
+                )
+            )
+        )
     }
 
     pub fn read(&self) -> Arc<T> {
-        unsafe { (*self.0.get()).clone() }
+        unsafe {
+            Arc::clone(&*self.0.load(Ordering::Relaxed))
+        }
     }
 
     pub fn update(&self, value: T) {
         let new = Arc::new(value);
-        unsafe { *self.0.get() = new; }
+        let old = self.0.swap(
+            Box::into_raw(Box::new(new)),
+            Ordering::Relaxed
+        );
+        unsafe {
+            drop(Box::from_raw(old));
+        }
     }
 }
 

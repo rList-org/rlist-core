@@ -1,13 +1,7 @@
-[package]
-name = "rlist-core"
-version = "0.1.0"
-edition = "2021"
-description = "rList core library" 
-authors = [
-    "Nikaidou Haruki <meteo.haru@gmail.com>"
-]
-repository = "https://github.com/rList-org/rlist-core.git"
-license = "MIT"
+[workspace]
 
-[dependencies]
-rlist_vfs = "0.1.0"
+resolver = "2"
+members = [
+    "rlist-driver-macro",
+    "rlist-vfs",
+]
