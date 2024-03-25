@@ -1,6 +1,6 @@
 [package]
 name = "rlist_vfs"
-version = "0.1.1"
+version = "0.1.2"
 edition = "2021"
 authors = [
     "Nikaidou Haruki <meteo.haru@gmail.com>"
