@@ -17,3 +17,8 @@ pub fn static_download_link_file_derive(input: proc_macro::TokenStream) -> proc_
 pub fn derive_auto_static_combinable(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
     into_static_combinable_file::derive_auto_static_combinable(input)
 }
+
+#[proc_macro_derive(GetVfs)]
+pub fn auto_get_vfs(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
+    get_vfs::auto_get_vfs(input)
+}
