@@ -132,4 +132,37 @@ mod tests {
         let file3 = &dir2.files[0];
         assert_eq!(file3.name, "test3");
     }
+
+    fn new_file(name: String) -> StaticCombinableFile {
+        // 2023-1-14 13:20:00 UTC-0
+        let last_modified = SystemTime::UNIX_EPOCH + std::time::Duration::from_secs(1673702400);
+        let link1 = format!("https://example.com/{}", name);
+        let link2 = format!("https://example.org/{}", name);
+
+        StaticCombinableFile {
+            name,
+            size: 1024,
+            last_modified,
+            links: vec![link1, link2],
+        }
+    }
+
+    #[test]
+    fn test_serialize_file() {
+        let file = new_file("test".to_string());
+        let without_link: FileWithoutLink = file.clone().into();
+        let json = serde_json::to_string(&without_link).unwrap();
+        assert_eq!(json, r#"{"name":"test","size":1024,"last_modified":"2023-01-14T13:20:00Z"}"#);
+    }
+
+    #[test]
+    fn test_serialize_dir() {
+        let file1 = new_file("test1".to_string());
+        let dir1 = CombinableDir::new("dir1".to_string(), vec![file1], vec![]);
+        let file2 = new_file("test2".to_string());
+        let dir2 = CombinableDir::new("dir2".to_string(), vec![file2], vec![dir1]);
+        let without_link: DirWithoutLink = dir2.clone().into();
+        let json = serde_json::to_string(&without_link).unwrap();
+        assert_eq!(json, r#"{"name":"dir2","files":[{"name":"test2","size":1024,"last_modified":"2023-01-14T13:20:00Z"}],"subdirectories":[{"name":"dir1","files":[{"name":"test1","size":1024,"last_modified":"2023-01-14T13:20:00Z"}],"subdirectories":[],"size":1024,"last_modified":"2023-01-14T13:20:00Z"}],"size":2048,"last_modified":"2023-01-14T13:20:00Z"}"#);
+    }
 }
