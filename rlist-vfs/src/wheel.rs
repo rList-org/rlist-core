@@ -7,10 +7,11 @@ use crate::rcu::ReadCopyUpdate;
 use crate::without_link::DirWithoutLink;
 use futures::future::join_all;
 use tokio::time::{self, Duration};
+use crate::static_combinable::StaticCombinableFile;
 
 pub struct Wheel {
     pub drivers: Vec<Box<dyn GetVfs>>,
-    pub path_map: ReadCopyUpdate<HashMap<String, String>>,
+    pub path_map: ReadCopyUpdate<HashMap<String, StaticCombinableFile>>,
     pub tree: ReadCopyUpdate<DirWithoutLink>,
 }
 

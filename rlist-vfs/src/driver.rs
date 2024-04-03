@@ -46,14 +46,9 @@ pub trait CloudDriver<Config, State>: GetVfs
 /// The trait means that the driver **instance** can get the VFS from state by calling `get_vfs` function.
 ///
 /// You **must** implement this trait by calling `reload_vfs` then return the result.
+///
+/// You should implement this trait by using `#[derive(GetVfs)]`.
 pub trait GetVfs: Send + Sync {
-    /// You **must** implement this method by calling `reload_vfs` then return the result.
-    /// ## Example:
-    /// ```ignore
-    /// async fn get_vfs(&self) ->
-    ///     Result<CombinableDir<rlist-vfs::static_combinable::StaticCombinableFile>, String> {
-    ///         self.reload_vfs().await
-    /// }
-    /// ```
+    /// You should implement this trait by using `#[derive(GetVfs)]`.
     async fn get_vfs(&self) -> Result<CombinableDir<StaticCombinableFile>, String>;
 }

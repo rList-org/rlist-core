@@ -8,9 +8,9 @@ pub fn derive_auto_static_combinable(input: TokenStream) -> TokenStream {
     let name = input.ident;
 
     let expanded = quote! {
-        impl Into<StaticCombinableFile> for #name {
-            fn into(self) -> StaticCombinableFile {
-                StaticCombinableFile {
+        impl Into<rlist_vfs::static_combinable::StaticCombinableFile> for #name {
+            fn into(self) -> rlist_vfs::static_combinable::StaticCombinableFile {
+                rlist_vfs::static_combinable::StaticCombinableFile {
                     name: self.name().to_string(),
                     size: self.size(),
                     last_modified: self.last_modified(),
