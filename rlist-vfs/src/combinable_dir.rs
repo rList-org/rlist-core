@@ -54,19 +54,21 @@ impl<File: StaticDownloadLinkFile> CombinableDir<File> {
     }
 
     pub fn compress_path(self) -> HashMap<String, File> {
-        // TODO: Test this method
-        let mut map: HashMap<String, File> = HashMap::new();
-        let mut stack: Vec<(String, CombinableDir<File>)> = vec![(String::new(), self)];
-        while !stack.is_empty() {
-            let (path, dir) = stack.pop().unwrap();
+        fn compress_path_in_dir<File: StaticDownloadLinkFile>(path: Vec<String>, dir: CombinableDir<File>, map: &mut HashMap<String, File>) {
+            let path_string = path.join("/") + "/";
             for file in dir.files {
-                map.insert(path.clone() + file.name(), file);
+                let file_name = file.name();
+                map.insert(path_string.clone() + file_name, file);
             }
             for subdirectory in dir.subdirectories {
-                stack.push((path.clone() + subdirectory.name() + "/", subdirectory));
+                let next_path = path.clone().into_iter().chain(vec![subdirectory.name().to_string()]).collect();
+                compress_path_in_dir(next_path, subdirectory, map);
             }
         }
-        return map;
+        let mut map: HashMap<String, File> = HashMap::new();
+        let root_name = self.name();
+        compress_path_in_dir(vec![root_name.to_owned()], self, &mut map);
+        map
     }
 }
 
@@ -290,5 +292,29 @@ mod tests {
         assert_eq!(dir_ptr.files()[0].name(), "file1");
 
         assert_eq!(mounted.size(), 2048);
+    }
+
+    #[test]
+    fn test_compress_path() {
+        let file1 = generate_file("file1", 2048, vec!["https://example.com"]);
+        let file2 = generate_file("file2", 4096, vec!["https://example.com"]);
+        let file3 = generate_file("file3", 8192, vec!["https://example.com"]);
+
+        let dir1 = CombinableDir::new("dir1".to_string(), vec![file1], vec![]);
+        let dir2 = CombinableDir::new("dir2".to_string(), vec![file2, file3], vec![]);
+        let dir3 = CombinableDir::new("dir3".to_string(), vec![], vec![dir1, dir2]);
+
+        // dir3
+        // ├── dir1
+        // │   └── file1
+        // └── dir2
+        //     ├── file2
+        //     └── file3
+
+        let map = dir3.compress_path();
+        assert_eq!(map.len(), 3);
+        assert_eq!(map.get("dir3/dir1/file1").unwrap().name, "file1");
+        assert_eq!(map.get("dir3/dir2/file2").unwrap().name, "file2");
+        assert_eq!(map.get("dir3/dir2/file3").unwrap().name, "file3");
     }
 }
