@@ -25,7 +25,7 @@ impl<T: StaticDownloadLinkFile> Combinable for T {
             .map(|x| x.destruct())
             .collect::<Vec<_>>();
         let new_name = destructed[0].0.clone();
-        let new_size = destructed.iter().map(|x| x.1).sum();
+        let new_size = destructed.iter().map(|x| x.1).max().unwrap();
         let new_last_modified = destructed.iter().map(|x| x.2).max().unwrap();
         let download_links: Vec<String> = destructed.iter().map(|x| x.3.clone()).flatten().collect();
         return Self::new(new_name, new_size, new_last_modified.clone(), download_links);
@@ -94,6 +94,7 @@ impl StaticDownloadLinkFile for StaticCombinableFile {
 
 #[cfg(test)]
 mod tests {
+    use crate::combine;
     use super::*;
 
     #[test]
@@ -110,5 +111,46 @@ mod tests {
         assert_eq!(file.size(), 1024);
         assert_eq!(file.last_modified(), time);
         assert_eq!(file.links(), &vec!["https://example.com".to_string(), "https://example.org".to_string()]);
+    }
+
+    #[test]
+    fn combine_files() {
+        // last modified: 2023-1-1 00:00:00 UTC-0
+        let time = SystemTime::UNIX_EPOCH + std::time::Duration::from_secs(1672531200);
+        let name = "test".to_string();
+        let size = 1024;
+
+        let file1 = StaticCombinableFile {
+            name: name.clone(),
+            size,
+            last_modified: time,
+            links: vec!["https://example.com".to_string()],
+        };
+
+        let file2 = StaticCombinableFile {
+            name: name.clone(),
+            size,
+            last_modified: time,
+            links: vec!["https://example.org".to_string()],
+        };
+
+        let file3 = StaticCombinableFile {
+            name: name.clone(),
+            size,
+            last_modified: time,
+            links: vec!["https://example.net".to_string()],
+        };
+
+        let combined = combine![file1, file2, file3];
+        assert_eq!(combined.name(), "test");
+        assert_eq!(combined.size(), 1024);
+        assert_eq!(combined.last_modified(), time);
+        assert_eq!(
+            combined.links(), &vec![
+                "https://example.com".to_string(),
+                "https://example.org".to_string(),
+                "https://example.net".to_string()
+            ]
+        );
     }
 }
