@@ -52,6 +52,13 @@ pub struct StaticCombinableFile {
     pub links: Vec<String>,
 }
 
+impl StaticCombinableFile {
+    pub fn random_link(&self) -> String {
+        let index = thread_rng().gen_range(0..self.links.len());
+        return self.links[index].clone()
+    }
+}
+
 impl VfsBasicMeta for StaticCombinableFile {
     fn name(&self) -> &str {
         self.name.as_str()
@@ -82,5 +89,26 @@ impl StaticDownloadLinkFile for StaticCombinableFile {
 
     fn destruct(self) -> (String, u64, SystemTime, Vec<String>) {
         (self.name, self.size, self.last_modified, self.links)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_static_combinable_file() {
+        // last modified: 2023-1-1 00:00:00 UTC-0
+        let time = SystemTime::UNIX_EPOCH + std::time::Duration::from_secs(1672531200);
+        let file = StaticCombinableFile {
+            name: "test".to_string(),
+            size: 1024,
+            last_modified: time,
+            links: vec!["https://example.com".to_string(), "https://example.org".to_string()],
+        };
+        assert_eq!(file.name(), "test");
+        assert_eq!(file.size(), 1024);
+        assert_eq!(file.last_modified(), time);
+        assert_eq!(file.links(), &vec!["https://example.com".to_string(), "https://example.org".to_string()]);
     }
 }

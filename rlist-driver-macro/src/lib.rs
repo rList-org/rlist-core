@@ -1,6 +1,7 @@
 mod vfs_meta;
 mod static_link_file;
 mod into_static_combinable_file;
+mod get_vfs;
 
 #[proc_macro_derive(VfsMeta)]
 pub fn vfs_meta_derive(input: proc_macro::TokenStream) -> proc_macro::TokenStream {

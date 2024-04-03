@@ -58,16 +58,17 @@ impl<File: StaticDownloadLinkFile> CombinableDir<File> {
         return root;
     }
 
-    pub fn compress_path(self) -> HashMap<String, String> {
+    pub fn compress_path(self) -> HashMap<String, File> {
         // TODO: Test this method
-        let mut map: HashMap<String, String> = HashMap::new();
+        let mut map: HashMap<String, File> = HashMap::new();
         let mut stack: Vec<(String, CombinableDir<File>)> = vec![(String::new(), self)];
         while !stack.is_empty() {
             let (path, dir) = stack.pop().unwrap();
-            map.insert(path.clone(), dir.name.clone());
+            for file in dir.files {
+                map.insert(path.clone() + file.name(), file);
+            }
             for subdirectory in dir.subdirectories {
-                let new_path = format!("{}/{}", path, subdirectory.name);
-                stack.push((new_path, subdirectory));
+                stack.push((path.clone() + subdirectory.name() + "/", subdirectory));
             }
         }
         return map;
@@ -85,6 +86,7 @@ impl<File: StaticDownloadLinkFile> VfsBasicMeta for CombinableDir<File> {
         self.last_modified
     }
 }
+
 impl<File: StaticDownloadLinkFile> VfsDirMeta<File> for CombinableDir<File> {
     fn files(&self) -> &Vec<File> {
         &self.files
@@ -126,7 +128,7 @@ impl<File: StaticDownloadLinkFile> Combinable for CombinableDir<File> {
     }
 }
 
-fn divide_by_name<T: VfsBasicMeta> (items: Vec<T>) -> HashMap<String, Vec<T>> {
+fn divide_by_name<T: VfsBasicMeta>(items: Vec<T>) -> HashMap<String, Vec<T>> {
     let mut map: HashMap<String, Vec<T>> = HashMap::new();
     for item in items {
         let name = item.name().to_string();
