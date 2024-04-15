@@ -26,15 +26,7 @@ pub trait CloudDriver<Config, State>: GetVfs
     where Config: Clone + Send + Sync + for<'a> Deserialize<'a>
 {
     /// Create a new instance of the driver.
-    fn new(state: State) -> Self;
-
-    /// The name of the driver. For example, `Google Drive`.
-    /// It is used to identify the driver from the configuration file.
-    /// So, it **must be unique**.
-    ///
-    /// You can pull request to [rlist-drivers](https://github.com/rList-org/rlist-drivers)
-    /// to add your driver into the list. There is a check in match forks to make sure the driver name is unique.
-    fn driver_name() -> &'static str;
+    async fn new(state: State) -> Self;
 
     /// If `Config` is `State`, returns `Config` directly.
     async fn load_config(config: Config) -> State;
