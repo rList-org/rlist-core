@@ -21,6 +21,10 @@ pub mod driver;
 mod without_link;
 mod wheel;
 
+/// # Static Driver
+/// a simple driver whose config is the vfs itself.
+pub mod static_driver;
+
 /// The state of rList server
 pub use wheel::Wheel;
 
