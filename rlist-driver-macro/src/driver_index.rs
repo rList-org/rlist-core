@@ -4,7 +4,7 @@ use syn::{parse_macro_input, DeriveInput, Data, DataEnum, Variant, Meta, MetaNam
 
 pub fn rlist_driver_index(_attr: TokenStream, item: TokenStream) -> TokenStream {
     let input = parse_macro_input!(item as DeriveInput);
-    let name = input.ident;
+    let name = &input.ident;
     let name_str = quote!(stringify!(#name));
 
     // check if the input is an enum
@@ -20,7 +20,7 @@ pub fn rlist_driver_index(_attr: TokenStream, item: TokenStream) -> TokenStream 
 
     // must be an enum
     let variants = match input.data  {
-        Data::Enum(DataEnum { variants, .. }) => variants,
+        Data::Enum(DataEnum { ref variants, .. }) => variants,
         _ => unreachable!(),
     };
 
