@@ -1,6 +1,6 @@
 use proc_macro::TokenStream;
 use quote::quote;
-use syn::{parse_macro_input, DeriveInput, Data, DataEnum, Variant, Meta, MetaNameValue, Expr, Lit, Token, Fields};
+use syn::{parse_macro_input, DeriveInput, Data, DataEnum, Variant, Meta, MetaNameValue, Expr, Lit, Token};
 use syn::punctuated::Punctuated;
 
 pub fn rlist_driver_index(_attr: TokenStream, item: TokenStream) -> TokenStream {
@@ -13,14 +13,14 @@ pub fn rlist_driver_index(_attr: TokenStream, item: TokenStream) -> TokenStream 
         Data::Enum(_) => {}
         _ => {
             return TokenStream::from(
-            quote!{
+                quote! {
                 compile_error!("rlist_driver_index can only be applied to enums");
-            })
+            });
         }
     };
 
     // must be an enum
-    let variants = match input.data  {
+    let variants = match input.data {
         Data::Enum(DataEnum { ref variants, .. }) => variants,
         _ => unreachable!(),
     };
@@ -117,7 +117,7 @@ pub fn rlist_driver_index(_attr: TokenStream, item: TokenStream) -> TokenStream 
         driver_enum_list.push(driver_name.value());
     }   // end of for loop
 
-    let helper = quote!{
+    let helper = quote! {
         const FIELDS: &'static [&'static str] = &["driver", "config"];
         struct DriverIndexVisitor;
         struct ConfigDeserializer<'a> {
@@ -125,7 +125,7 @@ pub fn rlist_driver_index(_attr: TokenStream, item: TokenStream) -> TokenStream 
         }
     };
 
-    let de_seed = quote!{
+    let de_seed = quote! {
         impl<'de, 'a> DeserializeSeed<'de> for ConfigDeserializer<'a> {
             type Value = Box<dyn std::any::Any>;
 
@@ -144,7 +144,7 @@ pub fn rlist_driver_index(_attr: TokenStream, item: TokenStream) -> TokenStream 
         }
     };
 
-    let visitor = quote!{
+    let visitor = quote! {
         impl<'de> Visitor<'de> for DriverIndexVisitor {
             type Value = #name;
 
@@ -190,7 +190,7 @@ pub fn rlist_driver_index(_attr: TokenStream, item: TokenStream) -> TokenStream 
         }
     }; // end of visitor
 
-    let impl_deserialize = quote!{
+    let impl_deserialize = quote! {
         impl<'de> Deserialize<'de> for #name {
             fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
                 where
@@ -203,7 +203,7 @@ pub fn rlist_driver_index(_attr: TokenStream, item: TokenStream) -> TokenStream 
 
     let original_remove_attributes = remove_attributes_from_variants(variants);
 
-    let expanded = quote!{
+    let expanded = quote! {
         use serde::de::{self, DeserializeSeed, Error, Visitor, MapAccess};
         use serde::{Deserialize, Deserializer};
         use std::fmt;
@@ -225,38 +225,18 @@ pub fn rlist_driver(_: TokenStream, input: TokenStream) -> TokenStream {
     input
 }
 
-fn remove_attributes_from_variants(variants: &Punctuated<Variant, Token![,]>) -> TokenStream {
+fn remove_attributes_from_variants(variants: &Punctuated<Variant, Token![,]>) -> proc_macro2::TokenStream {
     let processed_variants = variants.iter().map(|variant| {
         let Variant {
             ident,
             fields,
-            discriminant,
             ..
         } = variant;
-
-        let fields = match fields {
-            Fields::Named(ref fields) => {
-                let processed_fields = fields.named.iter().map(|field| {
-                    let ident = &field.ident;
-                    let ty = &field.ty;
-                    quote! { #ident: #ty }
-                });
-                quote! { { #(#processed_fields),* } }
-            },
-            Fields::Unnamed(ref fields) => {
-                let processed_fields = fields.unnamed.iter().map(|field| {
-                    let ty = &field.ty;
-                    quote! { #ty }
-                });
-                quote! { (#(#processed_fields),*) }
-            },
-            Fields::Unit => quote! {},
-        };
         quote! {
-            #ident #fields #discriminant
+            #ident(#fields),
         }
     });
     quote! {
-        #(#processed_variants),*
+        #(#processed_variants)*
     }
 }
