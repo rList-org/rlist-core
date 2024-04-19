@@ -202,7 +202,7 @@ pub fn rlist_driver_index(_attr: TokenStream, item: TokenStream) -> TokenStream 
 
     let original_remove_attributes = quote!{
         pub enum #name {
-            #(#variants)*
+            #variants
         }
     };
 
