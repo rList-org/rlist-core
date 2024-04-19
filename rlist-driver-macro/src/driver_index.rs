@@ -200,6 +200,10 @@ pub fn rlist_driver_index(_attr: TokenStream, item: TokenStream) -> TokenStream 
     };
 
     let expanded = quote!{
+        use serde::de::{DeserializeSeed, Error, Visitor, MapAccess};
+        use serde::{Deserialize, Deserializer};
+        use std::fmt;
+        #input
         #helper
         #de_seed
         #visitor
