@@ -1,6 +1,6 @@
 use proc_macro::TokenStream;
 use quote::quote;
-use syn::{parse_macro_input, DeriveInput, Data, DataEnum, Variant};
+use syn::{parse_macro_input, DeriveInput, Data, DataEnum, Variant, Meta, MetaNameValue, Expr, Lit};
 
 pub fn rlist_driver_index(_attr: TokenStream, item: TokenStream) -> TokenStream {
     let input = parse_macro_input!(item as DeriveInput);
@@ -41,7 +41,7 @@ pub fn rlist_driver_index(_attr: TokenStream, item: TokenStream) -> TokenStream 
     // items in the enum
     // #[rlist_driver_index]
     // pub enum DriverIndex {
-    //     #[rlist_driver_name = "example_driver_1"]
+    //     #[rlist_driver(name = "example_driver_1")]
     //     ExampleDriver1(ExampleDriver1),               <--- this is the item
     // }
 
@@ -49,26 +49,60 @@ pub fn rlist_driver_index(_attr: TokenStream, item: TokenStream) -> TokenStream 
     // every driver item should be like
     // #[rlist_driver_index]
     // pub enum DriverIndex {
-    //     #[rlist_driver_name = "example_driver_1"]
+    //     #[rlist_driver(name = "example_driver_1")]
     //     ExampleDriver1(ExampleDriver1),
-    //     #[rlist_driver_name = "example_driver_2"]
+    //     #[rlist_driver(name = "example_driver_2")]
     //     ExampleDriver2(ExampleDriver2),
     // }
     for Variant { ident, attrs, .. } in variants {
-        let driver_name = attrs.iter()
-            .find_map(|attr| {
-                if attr.path().is_ident("rlist_driver_name") {
-                    attr.parse_args::<syn::LitStr>().ok()
+        let args = attrs
+            .iter()
+            .map(|attr| {
+                // check if the attribute is `name`
+                // #[rlist_driver(name = "example_driver_1")]
+                //                ^^^^
+                //                check if the attribute is `name`
+                if attr.path().is_ident("rlist_driver") {
+                    attr
                 } else {
-                    panic!("Each variant must have a `rlist_driver_name` attribute")
+                    panic!("Each driver must have a `rlist_driver` attribute")
                 }
-            });
+            })
+            .collect::<Vec<_>>();
 
-        // match arms are for deserialization
-        // #[rlist_driver_name = "example_driver_1"]
-        //                        ^^^^^^^^^^^^^^^^
-        //                        this is the driver name also used in the match arm
-        let driver_name = driver_name.unwrap();
+        // try to get the driver name
+        let driver_name: Expr = args.iter().find_map(|attr| {
+            // check if the attribute is `name`
+            // #[rlist_driver(name = "example_driver_1")]
+            //                        ^^^^^^^^^^^^^^^^
+            //                        check if the attribute is `name`
+            if let Meta::NameValue(MetaNameValue { path, value, .. }) = attr.parse_args().unwrap() {
+                // match arms are for deserialization
+                // #[rlist_driver(name = "example_driver_1")]
+                //                        ^^^^^^^^^^^^^^^^
+                //                        this is the driver name also used in the match arm
+                if path.is_ident("name") {
+                    Some(value)
+                } else {
+                    panic!("Each driver must have a `name` in the `rlist_driver` attribute")
+                }
+            } else {
+                panic!("Each driver must have a `name` in the `rlist_driver` attribute")
+            }
+        }).unwrap();
+
+        // check whether the `driver_name` above is like `"example_driver_1"`
+        let driver_name = if let Expr::Lit(lit) = driver_name {
+            lit.lit
+        } else {
+            panic!("Name must be a string")
+        };
+        let driver_name = if let Lit::Str(s) = driver_name {
+            s
+        } else {
+            panic!("Name must be a string")
+        };
+
 
         // fill the `visitor_match_arms` and `deserializer_seed_match_arms`
         visitor_match_arms.push(quote! {
@@ -173,4 +207,9 @@ pub fn rlist_driver_index(_attr: TokenStream, item: TokenStream) -> TokenStream 
     };
 
     TokenStream::from(expanded)
+}
+
+pub fn rlist_driver(_: TokenStream, input: TokenStream) -> TokenStream {
+    // This macro now just forwards the input as it's primarily used for metadata
+    input
 }

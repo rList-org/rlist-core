@@ -28,3 +28,8 @@ pub fn auto_get_vfs(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
 pub fn rlist_driver_index(attr: proc_macro::TokenStream, item: proc_macro::TokenStream) -> proc_macro::TokenStream {
     driver_index::rlist_driver_index(attr, item)
 }
+
+#[proc_macro_attribute]
+pub fn rlist_driver(attr: proc_macro::TokenStream, item: proc_macro::TokenStream) -> proc_macro::TokenStream {
+    driver_index::rlist_driver(attr, item)
+}
