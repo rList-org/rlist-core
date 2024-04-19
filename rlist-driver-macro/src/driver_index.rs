@@ -1,6 +1,7 @@
 use proc_macro::TokenStream;
 use quote::quote;
-use syn::{parse_macro_input, DeriveInput, Data, DataEnum, Variant, Meta, MetaNameValue, Expr, Lit};
+use syn::{parse_macro_input, DeriveInput, Data, DataEnum, Variant, Meta, MetaNameValue, Expr, Lit, Token, Fields};
+use syn::punctuated::Punctuated;
 
 pub fn rlist_driver_index(_attr: TokenStream, item: TokenStream) -> TokenStream {
     let input = parse_macro_input!(item as DeriveInput);
@@ -200,16 +201,15 @@ pub fn rlist_driver_index(_attr: TokenStream, item: TokenStream) -> TokenStream 
         }
     };
 
-    let original_remove_attributes = quote!{
-        pub enum #name {
-            #variants
-        }
-    };
+    let original_remove_attributes = remove_attributes_from_variants(variants);
 
     let expanded = quote!{
         use serde::de::{self, DeserializeSeed, Error, Visitor, MapAccess};
         use serde::{Deserialize, Deserializer};
         use std::fmt;
+        pub enum #name {
+            #original_remove_attributes
+        }
         #original_remove_attributes
         #helper
         #de_seed
@@ -223,4 +223,40 @@ pub fn rlist_driver_index(_attr: TokenStream, item: TokenStream) -> TokenStream 
 pub fn rlist_driver(_: TokenStream, input: TokenStream) -> TokenStream {
     // This macro now just forwards the input as it's primarily used for metadata
     input
+}
+
+fn remove_attributes_from_variants(variants: &Punctuated<Variant, Token![,]>) -> TokenStream {
+    let processed_variants = variants.iter().map(|variant| {
+        let Variant {
+            ident,
+            fields,
+            discriminant,
+            ..
+        } = variant;
+
+        let fields = match fields {
+            Fields::Named(ref fields) => {
+                let processed_fields = fields.named.iter().map(|field| {
+                    let ident = &field.ident;
+                    let ty = &field.ty;
+                    quote! { #ident: #ty }
+                });
+                quote! { { #(#processed_fields),* } }
+            },
+            Fields::Unnamed(ref fields) => {
+                let processed_fields = fields.unnamed.iter().map(|field| {
+                    let ty = &field.ty;
+                    quote! { #ty }
+                });
+                quote! { (#(#processed_fields),*) }
+            },
+            Fields::Unit => quote! {},
+        };
+        quote! {
+            #ident #fields #discriminant
+        }
+    });
+    quote! {
+        #(#processed_variants),*
+    }
 }
