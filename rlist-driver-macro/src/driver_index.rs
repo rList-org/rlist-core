@@ -219,11 +219,6 @@ pub fn rlist_driver_index(_attr: TokenStream, item: TokenStream) -> TokenStream 
     TokenStream::from(expanded)
 }
 
-pub fn rlist_driver(_: TokenStream, input: TokenStream) -> TokenStream {
-    // This macro now just forwards the input as it's primarily used for metadata
-    input
-}
-
 fn remove_attributes_from_variants(variants: &Punctuated<Variant, Token![,]>) -> proc_macro2::TokenStream {
     let processed_variants = variants.iter().map(|variant| {
         let Variant {
@@ -232,7 +227,7 @@ fn remove_attributes_from_variants(variants: &Punctuated<Variant, Token![,]>) ->
             ..
         } = variant;
         quote! {
-            #ident(#fields),
+            #ident #fields,
         }
     });
     quote! {
