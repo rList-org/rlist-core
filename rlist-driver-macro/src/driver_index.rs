@@ -210,7 +210,6 @@ pub fn rlist_driver_index(_attr: TokenStream, item: TokenStream) -> TokenStream 
         pub enum #name {
             #original_remove_attributes
         }
-        #original_remove_attributes
         #helper
         #de_seed
         #visitor
