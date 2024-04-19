@@ -34,7 +34,7 @@ pub fn rlist_driver_index(_attr: TokenStream, item: TokenStream) -> TokenStream 
     let mut deserializer_seed_match_arms = Vec::new();
     // match driver.as_str() {
     //      "onedrive" => OnedriveConfig::deserialize(deserializer).map(|c| Box::new(c) as Box<dyn std::any::Any>),     <--- this is the `deserializer_seed_match_arm`
-    //      _ => Err(de::Error::custom("invalid driver")),
+    //      _ => Err(Error::custom("invalid driver")),
     // },
 
     let mut driver_enum_list = Vec::new();
@@ -109,12 +109,12 @@ pub fn rlist_driver_index(_attr: TokenStream, item: TokenStream) -> TokenStream 
             #driver_name => Ok(#name::#ident(*config.downcast().unwrap())),
         });
         deserializer_seed_match_arms.push(quote! {
-            #driver_name => #ident::deserialize(deserializer).map(|c| Box::new(c) as Box<dyn std::any::Any>),
+            #driver_name => #name::deserialize(deserializer).map(|c| Box::new(c) as Box<dyn std::any::Any>),
         });
 
         // fill the `driver_enum_list`
         driver_enum_list.push(driver_name.value());
-    }
+    }   // end of for loop
 
     let helper = quote!{
         const FIELDS: &'static [&'static str] = &["driver", "config"];
@@ -135,9 +135,9 @@ pub fn rlist_driver_index(_attr: TokenStream, item: TokenStream) -> TokenStream 
                 match self.driver {
                     Some(driver) => match driver.as_str() {
                         #(#deserializer_seed_match_arms)*
-                        _ => Err(de::Error::custom("invalid driver")),
+                        _ => Err(Error::custom("invalid driver")),
                     },
-                    None => Err(de::Error::custom("driver is required before config")),
+                    None => Err(Error::custom("driver is required before config")),
                 }
             }
         }
@@ -148,7 +148,8 @@ pub fn rlist_driver_index(_attr: TokenStream, item: TokenStream) -> TokenStream 
             type Value = #name;
 
             fn expecting(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
-                formatter.write_str("struct " + #name_str)
+                let struct_prefix = String::from("struct ");
+                formatter.write_str(&(struct_prefix + #name_str))
             }
 
             fn visit_map<A>(self, mut map: A) -> Result<DriverIndex, A::Error>
@@ -162,31 +163,31 @@ pub fn rlist_driver_index(_attr: TokenStream, item: TokenStream) -> TokenStream 
                     match key.as_str() {
                         "driver" => {
                             if driver.is_some() {
-                                return Err(de::Error::duplicate_field("driver"));
+                                return Err(Error::duplicate_field("driver"));
                             }
                             driver = Some(map.next_value::<String>()?);
                         },
                         "config" => {
                             if config.is_some() {
-                                return Err(de::Error::duplicate_field("config"));
+                                return Err(Error::duplicate_field("config"));
                             }
                             config = Some(map.next_value_seed(ConfigDeserializer { driver: driver.as_ref() })?);
                         },
-                        _ => return Err(de::Error::unknown_field(&key, FIELDS)),
+                        _ => return Err(Error::unknown_field(&key, FIELDS)),
                     }
                 }
 
                 if let (Some(driver), Some(config)) = (driver, config) {
                     match driver.as_str() {
                         #(#visitor_match_arms)*
-                        _ => Err(de::Error::custom("unknown driver")),
+                        _ => Err(Error::custom("unknown driver")),
                     }
                 } else {
-                    Err(de::Error::missing_field("driver or config"))
+                    Err(Error::missing_field("driver or config"))
                 }
             }
         }
-    };
+    }; // end of visitor
 
     let impl_deserialize = quote!{
         impl<'de> Deserialize<'de> for #name {
@@ -199,11 +200,17 @@ pub fn rlist_driver_index(_attr: TokenStream, item: TokenStream) -> TokenStream 
         }
     };
 
+    let original_remove_attributes = quote!{
+        pub enum #name {
+            #(#variants)*
+        }
+    };
+
     let expanded = quote!{
-        use serde::de::{DeserializeSeed, Error, Visitor, MapAccess};
+        use serde::de::{self, DeserializeSeed, Error, Visitor, MapAccess};
         use serde::{Deserialize, Deserializer};
         use std::fmt;
-        #input
+        #original_remove_attributes
         #helper
         #de_seed
         #visitor
