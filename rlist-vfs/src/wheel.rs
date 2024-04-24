@@ -12,7 +12,7 @@ use tokio::time::{self, Duration};
 pub struct Wheel {
     pub drivers: Vec<Box<dyn GetVfs>>,
     pub path_map: ReadCopyUpdate<HashMap<String, StaticCombinableFile>>,
-    pub tree: ReadCopyUpdate<DirWithoutLink>,
+    pub tree: ReadCopyUpdate<String>,
 }
 
 impl Wheel {
@@ -27,6 +27,7 @@ impl Wheel {
         let combined_clone = combined.clone();
         let path_map = ReadCopyUpdate::new(combined.compress_path());
         let tree: DirWithoutLink = combined_clone.into();
+        let tree = serde_json::to_string(&tree).unwrap();
         let tree = ReadCopyUpdate::new(tree);
         Self {
             drivers,
@@ -47,6 +48,7 @@ impl Wheel {
         let combined_clone = combined.clone();
         let new_path_map = combined.compress_path();
         let new_tree: DirWithoutLink = combined_clone.into();
+        let new_tree = serde_json::to_string(&new_tree).unwrap();
         self.path_map.update(new_path_map);
         self.tree.update(new_tree);
     }

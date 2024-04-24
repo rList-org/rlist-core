@@ -451,13 +451,15 @@ version = "0.1.10"
 dependencies = [
  "proc-macro2",
  "quote",
- "rlist_vfs 0.1.3 (registry+https://github.com/rust-lang/crates.io-index)",
+ "rlist_vfs 0.1.3",
  "syn",
 ]
 
 [[package]]
 name = "rlist_vfs"
 version = "0.1.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "860dc22256218be7a8e999961233e128fd29ede6d51fd551ce2b27fdcaf17b50"
 dependencies = [
  "async-trait",
  "chrono",
@@ -470,9 +472,7 @@ dependencies = [
 
 [[package]]
 name = "rlist_vfs"
-version = "0.1.3"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "860dc22256218be7a8e999961233e128fd29ede6d51fd551ce2b27fdcaf17b50"
+version = "0.1.4"
 dependencies = [
  "async-trait",
  "chrono",
