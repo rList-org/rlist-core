@@ -18,8 +18,8 @@ mod rcu;
 /// - [GetVfs](driver::GetVfs)
 pub mod driver;
 
-mod without_link;
 mod wheel;
+mod without_link;
 
 /// # Static Driver
 /// a simple driver whose config is the vfs itself.
@@ -30,10 +30,11 @@ pub use wheel::Wheel;
 
 /// Basic VFS (Virtual File System) traits
 pub trait VfsBasicMeta
-    where Self: Send + Sync + Clone + Sized + 'static
+where
+    Self: Send + Sync + Clone + Sized + 'static,
 {
     fn name(&self) -> &str;
-    fn size(&self) -> u64;  // in bytes
+    fn size(&self) -> u64; // in bytes
     fn last_modified(&self) -> std::time::SystemTime;
 }
 
@@ -47,4 +48,3 @@ pub trait VfsDirMeta<File: VfsFileMeta>: VfsBasicMeta {
     fn files(&self) -> &Vec<File>;
     fn subdirectories(&self) -> &Vec<Self>;
 }
-

@@ -1,8 +1,7 @@
 use proc_macro::TokenStream;
 
 use quote::quote;
-use syn::{Data, DeriveInput, Fields, parse_macro_input};
-
+use syn::{parse_macro_input, Data, DeriveInput, Fields};
 
 pub fn static_download_link_file_derive(input: TokenStream) -> TokenStream {
     let input = parse_macro_input!(input as DeriveInput);
@@ -26,12 +25,14 @@ pub fn static_download_link_file_derive(input: TokenStream) -> TokenStream {
                     }
                 }
             } // end of for field in fields.named
-        } else { // if not named fields
+        } else {
+            // if not named fields
             return TokenStream::from(quote! {
                 compile_error!("StaticDownloadLinkFile can only be derived for structs with named fields.");
             });
         } // end of if let Fields::Named(fields)
-    } else { // if not a struct
+    } else {
+        // if not a struct
         return TokenStream::from(quote! {
             compile_error!("StaticDownloadLinkFile can only be derived for structs.");
         });

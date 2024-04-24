@@ -1,7 +1,7 @@
-use std::time::SystemTime;
-use rand::{Rng, thread_rng};
 use crate::combinable::Combinable;
 use crate::{VfsBasicMeta, VfsFileMeta};
+use rand::{thread_rng, Rng};
+use std::time::SystemTime;
 
 /// The download link can be determined **when instance is created**.
 pub trait StaticDownloadLinkFile: VfsBasicMeta {
@@ -21,25 +21,31 @@ pub trait StaticDownloadLinkFile: VfsBasicMeta {
 impl<T: StaticDownloadLinkFile> Combinable for T {
     /// Combine **same** files which have different download links to one file.
     fn combine(from: Vec<Self>) -> Self {
-        let destructed: Vec<(String, u64, SystemTime, Vec<String>)> = from.into_iter()
-            .map(|x| x.destruct())
-            .collect::<Vec<_>>();
+        let destructed: Vec<(String, u64, SystemTime, Vec<String>)> =
+            from.into_iter().map(|x| x.destruct()).collect::<Vec<_>>();
         let new_name = destructed[0].0.clone();
         let new_size = destructed.iter().map(|x| x.1).max().unwrap();
         let new_last_modified = destructed.iter().map(|x| x.2).max().unwrap();
-        let download_links: Vec<String> = destructed.iter().map(|x| x.3.clone()).flatten().collect();
-        return Self::new(new_name, new_size, new_last_modified.clone(), download_links);
+        let download_links: Vec<String> =
+            destructed.iter().map(|x| x.3.clone()).flatten().collect();
+        return Self::new(
+            new_name,
+            new_size,
+            new_last_modified.clone(),
+            download_links,
+        );
     }
 }
 
 impl<T> VfsFileMeta for T
-where T: StaticDownloadLinkFile
+where
+    T: StaticDownloadLinkFile,
 {
     /// return a random link in list
     fn on_download(&self) -> String {
         let links = self.links();
         let index = thread_rng().gen_range(0..links.len());
-        return links[index].clone()
+        return links[index].clone();
     }
 }
 
@@ -55,7 +61,7 @@ pub struct StaticCombinableFile {
 impl StaticCombinableFile {
     pub fn random_link(&self) -> String {
         let index = thread_rng().gen_range(0..self.links.len());
-        return self.links[index].clone()
+        return self.links[index].clone();
     }
 }
 
@@ -94,8 +100,8 @@ impl StaticDownloadLinkFile for StaticCombinableFile {
 
 #[cfg(test)]
 mod tests {
-    use crate::combine;
     use super::*;
+    use crate::combine;
 
     #[test]
     fn test_static_combinable_file() {
@@ -105,12 +111,21 @@ mod tests {
             name: "test".to_string(),
             size: 1024,
             last_modified: time,
-            links: vec!["https://example.com".to_string(), "https://example.org".to_string()],
+            links: vec![
+                "https://example.com".to_string(),
+                "https://example.org".to_string(),
+            ],
         };
         assert_eq!(file.name(), "test");
         assert_eq!(file.size(), 1024);
         assert_eq!(file.last_modified(), time);
-        assert_eq!(file.links(), &vec!["https://example.com".to_string(), "https://example.org".to_string()]);
+        assert_eq!(
+            file.links(),
+            &vec![
+                "https://example.com".to_string(),
+                "https://example.org".to_string()
+            ]
+        );
     }
 
     #[test]
@@ -146,7 +161,8 @@ mod tests {
         assert_eq!(combined.size(), 1024);
         assert_eq!(combined.last_modified(), time);
         assert_eq!(
-            combined.links(), &vec![
+            combined.links(),
+            &vec![
                 "https://example.com".to_string(),
                 "https://example.org".to_string(),
                 "https://example.net".to_string()

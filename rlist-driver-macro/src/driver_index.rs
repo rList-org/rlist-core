@@ -1,7 +1,9 @@
 use proc_macro::TokenStream;
 use quote::quote;
-use syn::{parse_macro_input, DeriveInput, Data, DataEnum, Variant, Meta, MetaNameValue, Expr, Lit, Token};
 use syn::punctuated::Punctuated;
+use syn::{
+    parse_macro_input, Data, DataEnum, DeriveInput, Expr, Lit, Meta, MetaNameValue, Token, Variant,
+};
 
 pub fn rlist_driver_index(_attr: TokenStream, item: TokenStream) -> TokenStream {
     let input = parse_macro_input!(item as DeriveInput);
@@ -12,8 +14,7 @@ pub fn rlist_driver_index(_attr: TokenStream, item: TokenStream) -> TokenStream 
     match input.data {
         Data::Enum(_) => {}
         _ => {
-            return TokenStream::from(
-                quote! {
+            return TokenStream::from(quote! {
                 compile_error!("rlist_driver_index can only be applied to enums");
             });
         }
@@ -24,7 +25,6 @@ pub fn rlist_driver_index(_attr: TokenStream, item: TokenStream) -> TokenStream 
         Data::Enum(DataEnum { ref variants, .. }) => variants,
         _ => unreachable!(),
     };
-
 
     let mut visitor_match_arms = Vec::new();
     // match driver.as_str() {
@@ -46,7 +46,6 @@ pub fn rlist_driver_index(_attr: TokenStream, item: TokenStream) -> TokenStream 
     //     ExampleDriver1(ExampleDriver1),               <--- this is the item
     // }
 
-
     // every driver item should be like
     // #[rlist_driver_index]
     // pub enum DriverIndex {
@@ -55,7 +54,13 @@ pub fn rlist_driver_index(_attr: TokenStream, item: TokenStream) -> TokenStream 
     //     #[rlist_driver(name = "example_driver_2")]
     //     ExampleDriver2(ExampleDriver2),
     // }
-    for Variant { ident, attrs, .. } in variants {
+    for Variant {
+        ident,
+        attrs,
+        fields,
+        ..
+    } in variants
+    {
         let args = attrs
             .iter()
             .map(|attr| {
@@ -72,25 +77,30 @@ pub fn rlist_driver_index(_attr: TokenStream, item: TokenStream) -> TokenStream 
             .collect::<Vec<_>>();
 
         // try to get the driver name
-        let driver_name: Expr = args.iter().find_map(|attr| {
-            // check if the attribute is `name`
-            // #[rlist_driver(name = "example_driver_1")]
-            //                        ^^^^^^^^^^^^^^^^
-            //                        check if the attribute is `name`
-            if let Meta::NameValue(MetaNameValue { path, value, .. }) = attr.parse_args().unwrap() {
-                // match arms are for deserialization
+        let driver_name: Expr = args
+            .iter()
+            .find_map(|attr| {
+                // check if the attribute is `name`
                 // #[rlist_driver(name = "example_driver_1")]
                 //                        ^^^^^^^^^^^^^^^^
-                //                        this is the driver name also used in the match arm
-                if path.is_ident("name") {
-                    Some(value)
+                //                        check if the attribute is `name`
+                if let Meta::NameValue(MetaNameValue { path, value, .. }) =
+                    attr.parse_args().unwrap()
+                {
+                    // match arms are for deserialization
+                    // #[rlist_driver(name = "example_driver_1")]
+                    //                        ^^^^^^^^^^^^^^^^
+                    //                        this is the driver name also used in the match arm
+                    if path.is_ident("name") {
+                        Some(value)
+                    } else {
+                        panic!("Each driver must have a `name` in the `rlist_driver` attribute")
+                    }
                 } else {
                     panic!("Each driver must have a `name` in the `rlist_driver` attribute")
                 }
-            } else {
-                panic!("Each driver must have a `name` in the `rlist_driver` attribute")
-            }
-        }).unwrap();
+            })
+            .unwrap();
 
         // check whether the `driver_name` above is like `"example_driver_1"`
         let driver_name = if let Expr::Lit(lit) = driver_name {
@@ -104,18 +114,20 @@ pub fn rlist_driver_index(_attr: TokenStream, item: TokenStream) -> TokenStream 
             panic!("Name must be a string")
         };
 
+        let first_field = fields.iter().next().unwrap();
+        let type_of_first_field = &first_field.ty;
 
         // fill the `visitor_match_arms` and `deserializer_seed_match_arms`
         visitor_match_arms.push(quote! {
             #driver_name => Ok(#name::#ident(*config.downcast().unwrap())),
         });
         deserializer_seed_match_arms.push(quote! {
-            #driver_name => #name::deserialize(deserializer).map(|c| Box::new(c) as Box<dyn std::any::Any>),
+            #driver_name => #type_of_first_field::deserialize(deserializer).map(|c| Box::new(c) as Box<dyn std::any::Any>),
         });
 
         // fill the `driver_enum_list`
         driver_enum_list.push(driver_name.value());
-    }   // end of for loop
+    } // end of for loop
 
     let helper = quote! {
         const FIELDS: &'static [&'static str] = &["driver", "config"];
@@ -219,13 +231,11 @@ pub fn rlist_driver_index(_attr: TokenStream, item: TokenStream) -> TokenStream 
     TokenStream::from(expanded)
 }
 
-fn remove_attributes_from_variants(variants: &Punctuated<Variant, Token![,]>) -> proc_macro2::TokenStream {
+fn remove_attributes_from_variants(
+    variants: &Punctuated<Variant, Token![,]>,
+) -> proc_macro2::TokenStream {
     let processed_variants = variants.iter().map(|variant| {
-        let Variant {
-            ident,
-            fields,
-            ..
-        } = variant;
+        let Variant { ident, fields, .. } = variant;
         quote! {
             #ident #fields,
         }

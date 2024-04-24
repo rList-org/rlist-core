@@ -1,13 +1,13 @@
-use std::collections::HashMap;
 use crate::combinable::Combinable;
-use std::sync::Arc;
 use crate::combinable_dir::CombinableDir;
 use crate::driver::GetVfs;
 use crate::rcu::ReadCopyUpdate;
+use crate::static_combinable::StaticCombinableFile;
 use crate::without_link::DirWithoutLink;
 use futures::future::join_all;
+use std::collections::HashMap;
+use std::sync::Arc;
 use tokio::time::{self, Duration};
-use crate::static_combinable::StaticCombinableFile;
 
 pub struct Wheel {
     pub drivers: Vec<Box<dyn GetVfs>>,
@@ -17,10 +17,9 @@ pub struct Wheel {
 
 impl Wheel {
     pub async fn new(drivers: Vec<Box<dyn GetVfs>>) -> Arc<Self> {
-        let dirs = join_all(drivers.iter()
-            .map(|x| x.get_vfs())
-            .collect::<Vec<_>>()).await;
-        let dirs = dirs.into_iter()
+        let dirs = join_all(drivers.iter().map(|x| x.get_vfs()).collect::<Vec<_>>()).await;
+        let dirs = dirs
+            .into_iter()
             .filter(|x| x.is_ok())
             .map(|x| x.unwrap())
             .collect::<Vec<_>>();
@@ -33,14 +32,14 @@ impl Wheel {
             drivers,
             path_map,
             tree,
-        }.set_refresh_interval()
+        }
+        .set_refresh_interval()
     }
 
     async fn refresh(&self) {
-        let dirs = join_all(self.drivers.iter()
-            .map(|x| x.get_vfs())
-            .collect::<Vec<_>>()).await;
-        let dirs = dirs.into_iter()
+        let dirs = join_all(self.drivers.iter().map(|x| x.get_vfs()).collect::<Vec<_>>()).await;
+        let dirs = dirs
+            .into_iter()
             .filter(|x| x.is_ok())
             .map(|x| x.unwrap())
             .collect::<Vec<_>>();

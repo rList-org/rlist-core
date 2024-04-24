@@ -1,7 +1,6 @@
 use proc_macro::TokenStream;
 use quote::quote;
-use syn::{parse_macro_input, DeriveInput, Data, Fields};
-
+use syn::{parse_macro_input, Data, DeriveInput, Fields};
 
 pub fn vfs_meta_derive(input: TokenStream) -> TokenStream {
     let input = parse_macro_input!(input as DeriveInput);
@@ -29,12 +28,14 @@ pub fn vfs_meta_derive(input: TokenStream) -> TokenStream {
                     }
                 }
             } // end of for field in fields.named
-        } else { // if not named fields
+        } else {
+            // if not named fields
             return TokenStream::from(quote! {
                 compile_error!("VfsMeta can only be derived for structs with named fields.");
             });
         } // end of if let Fields::Named(fields)
-    } else { // if not a struct
+    } else {
+        // if not a struct
         return TokenStream::from(quote! {
             compile_error!("VfsMeta can only be derived for structs.");
         });
@@ -53,8 +54,7 @@ pub fn vfs_meta_derive(input: TokenStream) -> TokenStream {
     }
     if !missing_fields.is_empty() {
         let missing_fields = missing_fields.join(", ");
-        let error_message =
-            format!("VfsMeta Struct must contain '{}' fields.", missing_fields);
+        let error_message = format!("VfsMeta Struct must contain '{}' fields.", missing_fields);
         return TokenStream::from(quote! {
             compile_error!(#error_message);
         });

@@ -1,34 +1,21 @@
-use std::sync::Arc;
 use std::sync::atomic::{AtomicPtr, Ordering};
+use std::sync::Arc;
 
 #[derive(Debug)]
-pub struct ReadCopyUpdate<T> (AtomicPtr<Arc<T>>);
+pub struct ReadCopyUpdate<T>(AtomicPtr<Arc<T>>);
 
 impl<T> ReadCopyUpdate<T> {
     pub fn new(value: T) -> Self {
-        ReadCopyUpdate(
-            AtomicPtr::new(
-                Box::into_raw(
-                    Box::new(
-                        Arc::new(value)
-                    )
-                )
-            )
-        )
+        ReadCopyUpdate(AtomicPtr::new(Box::into_raw(Box::new(Arc::new(value)))))
     }
 
     pub fn read(&self) -> Arc<T> {
-        unsafe {
-            Arc::clone(&*self.0.load(Ordering::Relaxed))
-        }
+        unsafe { Arc::clone(&*self.0.load(Ordering::Relaxed)) }
     }
 
     pub fn update(&self, value: T) {
         let new = Arc::new(value);
-        let old = self.0.swap(
-            Box::into_raw(Box::new(new)),
-            Ordering::Relaxed
-        );
+        let old = self.0.swap(Box::into_raw(Box::new(new)), Ordering::Relaxed);
         unsafe {
             drop(Box::from_raw(old));
         }
@@ -39,8 +26,8 @@ unsafe impl<T> Sync for ReadCopyUpdate<T> {}
 
 #[cfg(test)]
 mod tests {
-    use std::sync::atomic::{AtomicBool, AtomicUsize};
     use super::*;
+    use std::sync::atomic::{AtomicBool, AtomicUsize};
 
     #[test]
     fn test_read_copy_update_1() {
@@ -61,14 +48,12 @@ mod tests {
         let rcu_copy = rcu.clone();
 
         // busy loop
-        let _loop_spawn = std::thread::spawn(move || {
-            loop {
-                if should_break.load(Ordering::Relaxed) {
-                    break;
-                }
-                let _value = rcu_copy.read();
-                atomic_counter.fetch_add(1, Ordering::Relaxed);
+        let _loop_spawn = std::thread::spawn(move || loop {
+            if should_break.load(Ordering::Relaxed) {
+                break;
             }
+            let _value = rcu_copy.read();
+            atomic_counter.fetch_add(1, Ordering::Relaxed);
         });
 
         // update

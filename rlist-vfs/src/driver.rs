@@ -1,7 +1,7 @@
-use async_trait::async_trait;
-use serde::Deserialize;
 use crate::combinable_dir::CombinableDir;
 use crate::static_combinable::StaticCombinableFile;
+use async_trait::async_trait;
+use serde::Deserialize;
 
 #[async_trait]
 /// # Main trait of the driver
@@ -23,7 +23,8 @@ use crate::static_combinable::StaticCombinableFile;
 ///
 /// Of course, you can just copy `Config` to `State` if you don't need a state.
 pub trait CloudDriver<Config, State>: GetVfs
-    where Config: Clone + Send + Sync + for<'a> Deserialize<'a>
+where
+    Config: Clone + Send + Sync + for<'a> Deserialize<'a>,
 {
     /// Create a new instance of the driver.
     async fn new(state: State) -> Self;
