@@ -1,9 +1,9 @@
-use async_trait::async_trait;
-use serde::Deserialize;
 use crate::combinable_dir::CombinableDir;
 use crate::driver::{CloudDriver, GetVfs};
 use crate::static_combinable::StaticCombinableFile;
 use crate::VfsBasicMeta;
+use async_trait::async_trait;
+use serde::Deserialize;
 
 #[derive(Debug, Clone, Deserialize)]
 pub struct StaticFile {
@@ -63,12 +63,9 @@ impl Into<StaticCombinableFile> for StaticFile {
 
 impl Into<CombinableDir<StaticCombinableFile>> for StaticDir {
     fn into(self) -> CombinableDir<StaticCombinableFile> {
-        let subdirectories: Vec<CombinableDir<StaticCombinableFile>> = self.subdirectories.into_iter()
-            .map(|x| x.into())
-            .collect();
-        let files: Vec<StaticCombinableFile> = self.files.into_iter()
-            .map(|x| x.into())
-            .collect();
+        let subdirectories: Vec<CombinableDir<StaticCombinableFile>> =
+            self.subdirectories.into_iter().map(|x| x.into()).collect();
+        let files: Vec<StaticCombinableFile> = self.files.into_iter().map(|x| x.into()).collect();
         let name = self.name;
         CombinableDir::new(name, files, subdirectories)
     }
@@ -81,9 +78,7 @@ pub struct StaticDriver {
 #[async_trait]
 impl CloudDriver<StaticDir, StaticDir> for StaticDriver {
     async fn new(state: StaticDir) -> Self {
-        Self {
-            config: state,
-        }
+        Self { config: state }
     }
 
     async fn load_config(config: StaticDir) -> StaticDir {

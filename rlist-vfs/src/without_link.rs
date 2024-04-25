@@ -1,8 +1,8 @@
-use serde::Serialize;
-use chrono::{DateTime, Utc};
 use crate::combinable_dir::CombinableDir;
 use crate::static_combinable::StaticCombinableFile;
 use crate::VfsBasicMeta;
+use chrono::{DateTime, Utc};
+use serde::Serialize;
 
 #[derive(Clone, Serialize)]
 pub struct FileWithoutLink {
@@ -49,8 +49,8 @@ impl Into<DirWithoutLink> for CombinableDir<StaticCombinableFile> {
 
 #[cfg(test)]
 mod tests {
-    use std::time::SystemTime;
     use super::*;
+    use std::time::SystemTime;
 
     #[test]
     fn test_file_without_link() {
@@ -86,14 +86,12 @@ mod tests {
             links: vec!["https://example.com/3".to_string()],
         };
         let dir1 = CombinableDir::new(
-            "dir1".to_string(), vec![file1.clone(), file2.clone()], vec![]
+            "dir1".to_string(),
+            vec![file1.clone(), file2.clone()],
+            vec![],
         );
-        let dir2 = CombinableDir::new(
-            "dir2".to_string(), vec![file3.clone()], vec![]
-        );
-        let dir3 = CombinableDir::new(
-            "dir3".to_string(), vec![], vec![dir1.clone(), dir2.clone()]
-        );
+        let dir2 = CombinableDir::new("dir2".to_string(), vec![file3.clone()], vec![]);
+        let dir3 = CombinableDir::new("dir3".to_string(), vec![], vec![dir1.clone(), dir2.clone()]);
 
         // dir3
         // ├── dir1
@@ -152,7 +150,10 @@ mod tests {
         let file = new_file("test".to_string());
         let without_link: FileWithoutLink = file.clone().into();
         let json = serde_json::to_string(&without_link).unwrap();
-        assert_eq!(json, r#"{"name":"test","size":1024,"last_modified":"2023-01-14T13:20:00Z"}"#);
+        assert_eq!(
+            json,
+            r#"{"name":"test","size":1024,"last_modified":"2023-01-14T13:20:00Z"}"#
+        );
     }
 
     #[test]
@@ -163,6 +164,9 @@ mod tests {
         let dir2 = CombinableDir::new("dir2".to_string(), vec![file2], vec![dir1]);
         let without_link: DirWithoutLink = dir2.clone().into();
         let json = serde_json::to_string(&without_link).unwrap();
-        assert_eq!(json, r#"{"name":"dir2","files":[{"name":"test2","size":1024,"last_modified":"2023-01-14T13:20:00Z"}],"subdirectories":[{"name":"dir1","files":[{"name":"test1","size":1024,"last_modified":"2023-01-14T13:20:00Z"}],"subdirectories":[],"size":1024,"last_modified":"2023-01-14T13:20:00Z"}],"size":2048,"last_modified":"2023-01-14T13:20:00Z"}"#);
+        assert_eq!(
+            json,
+            r#"{"name":"dir2","files":[{"name":"test2","size":1024,"last_modified":"2023-01-14T13:20:00Z"}],"subdirectories":[{"name":"dir1","files":[{"name":"test1","size":1024,"last_modified":"2023-01-14T13:20:00Z"}],"subdirectories":[],"size":1024,"last_modified":"2023-01-14T13:20:00Z"}],"size":2048,"last_modified":"2023-01-14T13:20:00Z"}"#
+        );
     }
 }

@@ -1,8 +1,8 @@
-use std::collections::HashMap;
-use std::time::SystemTime;
+use crate::combinable::Combinable;
 use crate::static_combinable::StaticDownloadLinkFile;
 use crate::{VfsBasicMeta, VfsDirMeta};
-use crate::combinable::Combinable;
+use std::collections::HashMap;
+use std::time::SystemTime;
 
 #[derive(Clone)]
 pub struct CombinableDir<File: StaticDownloadLinkFile> {
@@ -23,8 +23,10 @@ impl<File: StaticDownloadLinkFile> CombinableDir<File> {
         } else {
             let files_last_modified = files.iter().map(|x| x.last_modified());
             let subdirectories_last_modified = subdirectories.iter().map(|x| x.last_modified());
-            files_last_modified.chain(subdirectories_last_modified)
-                .max().unwrap()
+            files_last_modified
+                .chain(subdirectories_last_modified)
+                .max()
+                .unwrap()
         };
         Self {
             name,
@@ -54,14 +56,22 @@ impl<File: StaticDownloadLinkFile> CombinableDir<File> {
     }
 
     pub fn compress_path(self) -> HashMap<String, File> {
-        fn compress_path_in_dir<File: StaticDownloadLinkFile>(path: Vec<String>, dir: CombinableDir<File>, map: &mut HashMap<String, File>) {
+        fn compress_path_in_dir<File: StaticDownloadLinkFile>(
+            path: Vec<String>,
+            dir: CombinableDir<File>,
+            map: &mut HashMap<String, File>,
+        ) {
             let path_string = path.join("/") + "/";
             for file in dir.files {
                 let file_name = file.name();
                 map.insert(path_string.clone() + file_name, file);
             }
             for subdirectory in dir.subdirectories {
-                let next_path = path.clone().into_iter().chain(vec![subdirectory.name().to_string()]).collect();
+                let next_path = path
+                    .clone()
+                    .into_iter()
+                    .chain(vec![subdirectory.name().to_string()])
+                    .collect();
                 compress_path_in_dir(next_path, subdirectory, map);
             }
         }
@@ -95,31 +105,21 @@ impl<File: StaticDownloadLinkFile> VfsDirMeta<File> for CombinableDir<File> {
 
 impl<File: StaticDownloadLinkFile> Combinable for CombinableDir<File> {
     fn combine(from: Vec<Self>) -> Self {
-        let from = from.into_iter()
-            .map(|x| x.destruct())
-            .collect::<Vec<_>>();
+        let from = from.into_iter().map(|x| x.destruct()).collect::<Vec<_>>();
         let new_name = from[0].0.clone();
-        let (files, subdirectories): (
-            Vec<Vec<File>>,
-            Vec<Vec<CombinableDir<File>>>
-        ) = from.into_iter()
-            .map(|x| (x.1, x.2))
-            .unzip();
-        let files = files.into_iter()
-            .flatten().collect::<Vec<_>>();
-        let subdirectories = subdirectories.into_iter()
-            .flatten().collect::<Vec<_>>();
+        let (files, subdirectories): (Vec<Vec<File>>, Vec<Vec<CombinableDir<File>>>) =
+            from.into_iter().map(|x| (x.1, x.2)).unzip();
+        let files = files.into_iter().flatten().collect::<Vec<_>>();
+        let subdirectories = subdirectories.into_iter().flatten().collect::<Vec<_>>();
         let files = divide_by_name(files);
-        let files = files.into_iter()
-            .map(|(_, files)| {
-                File::combine(files)
-            })
+        let files = files
+            .into_iter()
+            .map(|(_, files)| File::combine(files))
             .collect::<Vec<_>>();
         let subdirectories = divide_by_name(subdirectories);
-        let subdirectories = subdirectories.into_iter()
-            .map(|(_, subdirectories)| {
-                CombinableDir::combine(subdirectories)
-            })
+        let subdirectories = subdirectories
+            .into_iter()
+            .map(|(_, subdirectories)| CombinableDir::combine(subdirectories))
             .collect::<Vec<_>>();
         return CombinableDir::new(new_name, files, subdirectories);
     }
@@ -143,11 +143,16 @@ mod tests {
     use super::*;
     use crate::static_combinable::StaticCombinableFile;
 
-    fn generate_file(name: &str, size: u64, download_links_prefix: Vec<&str>) -> StaticCombinableFile {
+    fn generate_file(
+        name: &str,
+        size: u64,
+        download_links_prefix: Vec<&str>,
+    ) -> StaticCombinableFile {
         // last modified: 2023-1-1 00:00:00 UTC-0
         let time = SystemTime::UNIX_EPOCH + std::time::Duration::from_secs(1672531200);
 
-        let links = download_links_prefix.iter()
+        let links = download_links_prefix
+            .iter()
             .map(|x| format!("{}/{}", x, name))
             .collect();
 
@@ -168,7 +173,10 @@ mod tests {
 
         assert_eq!(dir1.name(), "dir1");
         assert_eq!(dir1.size(), 1024 + 2048);
-        assert_eq!(dir1.last_modified(), SystemTime::UNIX_EPOCH + std::time::Duration::from_secs(1672531200));
+        assert_eq!(
+            dir1.last_modified(),
+            SystemTime::UNIX_EPOCH + std::time::Duration::from_secs(1672531200)
+        );
         assert_eq!(dir1.files().len(), 2);
         assert_eq!(dir1.subdirectories().len(), 0);
     }
@@ -177,7 +185,11 @@ mod tests {
     fn test_dir_combine_1() {
         // combine 2 directories who have same file and no subdirectories
         let file1 = generate_file("test_file", 2048, vec!["https://example.com"]);
-        let file2 = generate_file("test_file", 2048, vec!["https://example.org", "https://example.net"]);
+        let file2 = generate_file(
+            "test_file",
+            2048,
+            vec!["https://example.org", "https://example.net"],
+        );
 
         let dir1 = CombinableDir::new("dir1".to_string(), vec![file1], vec![]);
         let dir2 = CombinableDir::new("dir1".to_string(), vec![file2], vec![]);
@@ -186,21 +198,38 @@ mod tests {
 
         assert_eq!(combined.name(), "dir1");
         assert_eq!(combined.size(), 2048);
-        assert_eq!(combined.last_modified(), SystemTime::UNIX_EPOCH + std::time::Duration::from_secs(1672531200));
+        assert_eq!(
+            combined.last_modified(),
+            SystemTime::UNIX_EPOCH + std::time::Duration::from_secs(1672531200)
+        );
         assert_eq!(combined.files().len(), 1);
 
         let file = combined.files()[0].clone();
         assert_eq!(file.name(), "test_file");
         assert_eq!(file.size(), 2048);
-        assert_eq!(file.last_modified(), SystemTime::UNIX_EPOCH + std::time::Duration::from_secs(1672531200));
-        assert_eq!(file.links(), &vec!["https://example.com/test_file", "https://example.org/test_file", "https://example.net/test_file"]);
+        assert_eq!(
+            file.last_modified(),
+            SystemTime::UNIX_EPOCH + std::time::Duration::from_secs(1672531200)
+        );
+        assert_eq!(
+            file.links(),
+            &vec![
+                "https://example.com/test_file",
+                "https://example.org/test_file",
+                "https://example.net/test_file"
+            ]
+        );
     }
 
     #[test]
     fn test_dir_combine_2() {
         // combine 2 directories who have different files and no subdirectories
         let file1 = generate_file("test_file1", 2048, vec!["https://example.com"]);
-        let file2 = generate_file("test_file2", 4096, vec!["https://example.com", "https://example.org"]);
+        let file2 = generate_file(
+            "test_file2",
+            4096,
+            vec!["https://example.com", "https://example.org"],
+        );
 
         let dir1 = CombinableDir::new("dir1".to_string(), vec![file1], vec![]);
         let dir2 = CombinableDir::new("dir1".to_string(), vec![file2], vec![]);
@@ -209,7 +238,10 @@ mod tests {
 
         assert_eq!(combined.name(), "dir1");
         assert_eq!(combined.size(), 2048 + 4096);
-        assert_eq!(combined.last_modified(), SystemTime::UNIX_EPOCH + std::time::Duration::from_secs(1672531200));
+        assert_eq!(
+            combined.last_modified(),
+            SystemTime::UNIX_EPOCH + std::time::Duration::from_secs(1672531200)
+        );
         assert_eq!(combined.files().len(), 2);
 
         let file1 = combined.files()[0].clone();
@@ -220,7 +252,13 @@ mod tests {
         let file2 = combined.files()[1].clone();
         assert_eq!(file2.name(), "test_file2");
         assert_eq!(file2.size(), 4096);
-        assert_eq!(file2.links(), &vec!["https://example.com/test_file2", "https://example.org/test_file2"]);
+        assert_eq!(
+            file2.links(),
+            &vec![
+                "https://example.com/test_file2",
+                "https://example.org/test_file2"
+            ]
+        );
     }
 
     #[test]
@@ -252,22 +290,45 @@ mod tests {
         let combined = CombinableDir::combine(vec![dir1, dir3]);
         assert_eq!(combined.name(), "dir1");
         assert_eq!(combined.size(), 2048 + 4096 + 8192 + 16384);
-        assert_eq!(combined.last_modified(), SystemTime::UNIX_EPOCH + std::time::Duration::from_secs(1672531200));
+        assert_eq!(
+            combined.last_modified(),
+            SystemTime::UNIX_EPOCH + std::time::Duration::from_secs(1672531200)
+        );
         assert_eq!(combined.files().len(), 2);
         assert_eq!(combined.subdirectories().len(), 2);
 
-        let mut file_names_in_combined = combined.files().iter().map(|x| x.name()).collect::<Vec<_>>();
+        let mut file_names_in_combined = combined
+            .files()
+            .iter()
+            .map(|x| x.name())
+            .collect::<Vec<_>>();
         file_names_in_combined.sort();
         assert_eq!(file_names_in_combined, vec!["file1", "file3"]);
 
-        let mut subdirectory_names_in_combined = combined.subdirectories().iter().map(|x| x.name()).collect::<Vec<_>>();
+        let mut subdirectory_names_in_combined = combined
+            .subdirectories()
+            .iter()
+            .map(|x| x.name())
+            .collect::<Vec<_>>();
         subdirectory_names_in_combined.sort();
         assert_eq!(subdirectory_names_in_combined, vec!["dir2", "dir4"]);
 
-        let file2 = combined.subdirectories().iter().find(|x| x.name() == "dir2").unwrap().files()[0].clone();
+        let file2 = combined
+            .subdirectories()
+            .iter()
+            .find(|x| x.name() == "dir2")
+            .unwrap()
+            .files()[0]
+            .clone();
         assert_eq!(file2.name(), "file2");
 
-        let file4 = combined.subdirectories().iter().find(|x| x.name() == "dir4").unwrap().files()[0].clone();
+        let file4 = combined
+            .subdirectories()
+            .iter()
+            .find(|x| x.name() == "dir4")
+            .unwrap()
+            .files()[0]
+            .clone();
         assert_eq!(file4.name(), "file4");
     }
 
@@ -281,12 +342,24 @@ mod tests {
         let mounted = dir.mount(path);
         let mut dir_ptr = &mounted;
         assert_eq!(dir_ptr.name(), "root");
-        dir_ptr = dir_ptr.subdirectories().iter().find(|x| x.name() == "home").unwrap();
+        dir_ptr = dir_ptr
+            .subdirectories()
+            .iter()
+            .find(|x| x.name() == "home")
+            .unwrap();
         assert_eq!(dir_ptr.name(), "home");
-        dir_ptr = dir_ptr.subdirectories().iter().find(|x| x.name() == "user").unwrap();
+        dir_ptr = dir_ptr
+            .subdirectories()
+            .iter()
+            .find(|x| x.name() == "user")
+            .unwrap();
         assert_eq!(dir_ptr.name(), "user");
         assert_eq!(dir_ptr.subdirectories().len(), 1);
-        dir_ptr = dir_ptr.subdirectories().iter().find(|x| x.name() == "dir").unwrap();
+        dir_ptr = dir_ptr
+            .subdirectories()
+            .iter()
+            .find(|x| x.name() == "dir")
+            .unwrap();
         assert_eq!(dir_ptr.name(), "dir");
         assert_eq!(dir_ptr.files().len(), 1);
         assert_eq!(dir_ptr.files()[0].name(), "file1");
